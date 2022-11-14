@@ -1,0 +1,58 @@
+version: '3.4'
+
+services:
+    webapp:
+        image: caco0516/k8-webapp:1.0.0
+        restart: always
+        build: ./webapp
+        ports:
+            - 80:80
+        environment:
+            - PORT=80
+            - API_URL=http://api:80
+        depends_on: 
+            - "api"
+        networks:
+            - my_network
+        volumes:
+            - ./webapp/views:/src/views:rw
+
+    api:
+        image: caco0516/k8-api:1.0.0
+        restart: always
+        build: ./api
+        ports:
+            - 8095:80
+        environment:
+            - PORT=80
+            - PRODUCTS_URL=http://products_service:80
+        depends_on: 
+            - "products_service"
+        networks:
+            - my_network
+            
+    products_service:
+        image: caco0516/k8-products-service:1.0.0
+        restart: always
+        build: ./products-service
+        ports:
+            - 80
+        environment:
+            - PORT=80
+            - DB_URL=postgresql://postgres:mysecretpassword@db:5432/postgres
+        networks:
+            - my_network
+        depends_on: 
+            - "db"
+            
+    db:
+        image: postgres
+        restart: always
+        environment:
+          POSTGRES_PASSWORD: mysecretpassword
+        networks:
+            - my_network
+
+networks:
+    my_network:
+        driver: bridge
